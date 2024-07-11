@@ -31,27 +31,55 @@ done
 cat /etc/profile.d/timout-settings.sh
 }
 
- prompt_for_domain_name() {
+#  prompt_for_domain_name() {
+#     while true; do
+
+# read -p "Enter a domain name: " DOMAIN_NAME
+
+# # Validate domain name
+# validate="(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)"
+
+# # If user doesn't enter anything
+# if [ -e $DOMAIN_NAME ]; then
+#     echo "You must enter a domain"
+# fi
+
+# if [[ $DOMAIN_NAME =~ $validate ]]; then
+#     echo "Valid $DOMAIN_NAME name."
+#     break
+# else
+#     echo "Not valid $DOMAIN_NAME name."
+# fi
+# done
+#  }
+
+prompt_for_domain_name() {
     while true; do
 
-read -p "Enter a domain name: " DOMAIN_NAME
+        read -p "Enter a domain name: " DOMAIN_NAME
 
-# Validate domain name
-validate="(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)"
+        # Validate domain name
+        validate="^(?=^.{5,254}$)(?:(?!\\d+\\.)[a-zA-Z0-9_\\-]{1,63}\\.?)+(?:[a-zA-Z]{2,})$"
 
-# If user doesn't enter anything
-if [ -e $DOMAIN_NAME ]; then
-    echo "You must enter a domain"
-fi
+        # If user doesn't enter anything
+        if [ -z "$DOMAIN_NAME" ]; then
+            echo "You must enter a domain"
+            continue
+        fi
 
-if [[ $DOMAIN_NAME =~ $validate ]]; then
-    echo "Valid $DOMAIN_NAME name."
-    break
-else
-    echo "Not valid $DOMAIN_NAME name."
-fi
-done
- }
+        # Validate using grep -P for Perl-compatible regex
+        if echo "$DOMAIN_NAME" | grep -Pq "$validate"; then
+            echo "Valid $DOMAIN_NAME name."
+            break
+        else
+            echo "Not valid $DOMAIN_NAME name."
+        fi
+    done
+}
+
+# Call the function
+# prompt_for_domain_name
+
 # Prompt for Doamin name
 prompt_for_domain_name
 
