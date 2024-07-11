@@ -11,7 +11,25 @@ MONTH=`date +%Y-%d`
 DAY=`date +%Y-%m-%d`
 NOW="$(date +"%Y-%m-%d_%H-%M-%S")"
 
+prompt_for_timeout_config() {
+    while true;do
+read -p "Enter your Timeout Config as seconds[1-3600]-(leave empty to set 300 seconds): " TIMEOUT_CONFIG
 
+# Use default SSH public key if no input provided
+if [ -z "$TIMEOUT_CONFIG" ]; then
+    if [[ "$TIMEOUT_CONFIG" =~ ^[0-9]+$ ]] && [ "$TIMEOUT_CONFIG" -gt 0 ] && [ "$TIMEOUT_CONFIG" -le 3600 ]; then
+        # TIMEOUT_CONFIG="$TIMEOUT_CONFIG"
+        echo -e '#!/bin/bash\n### $TIMEOUT_CONFIG seconds == $TIMEOUT_CONFIG/60 minutes ##\nTMOUT=$TIMEOUT_CONFIG\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
+        break
+    fi
+else
+ echo "Invalid Timeout config!"
+# echo -e '#!/bin/bash\n### 300 seconds == 5 minutes ##\nTMOUT=300\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
+
+fi
+done
+cat /etc/profile.d/timout-settings.sh
+}
 
  prompt_for_domain_name() {
     while true; do
@@ -78,26 +96,8 @@ hostnamectl set-hostname $HostName
 # Timeout Config -----------------------------------------------
 echo -e " \e[30;48;5;56m \e[1m \e[38;5;15mTimeout Setting \e[0m"
 # Prompt for Timeout Config
-prompt_for_timeout_config() {
-    while true;do
-read -p "Enter your Timeout Config as seconds[1-3600]-(leave empty to set 300 seconds): " TIMEOUT_CONFIG
 
-# Use default SSH public key if no input provided
-if [ -z "$TIMEOUT_CONFIG" ]; then
-    if [[ "$TIMEOUT_CONFIG" =~ ^[0-9]+$ ]] && [ "$TIMEOUT_CONFIG" -gt 0 ] && [ "$TIMEOUT_CONFIG" -le 3600 ]; then
-        # TIMEOUT_CONFIG="$TIMEOUT_CONFIG"
-        echo -e '#!/bin/bash\n### $TIMEOUT_CONFIG seconds == $TIMEOUT_CONFIG/60 minutes ##\nTMOUT=$TIMEOUT_CONFIG\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
-        break
-    fi
-else
- echo "Invalid Timeout config!"
-# echo -e '#!/bin/bash\n### 300 seconds == 5 minutes ##\nTMOUT=300\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
-
-fi
-done
-cat /etc/profile.d/timout-settings.sh
-}
-
+prompt_for_timeout_config
 #config sysctl.conf: -----------------------------------------
 cp /etc/sysctl.conf $BAC_DIR
 echo -e " \e[30;48;5;56m \e[1m \e[38;5;15mSysctl Configuration \e[0m"
