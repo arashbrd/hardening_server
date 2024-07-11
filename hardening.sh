@@ -12,8 +12,8 @@ DAY=`date +%Y-%m-%d`
 NOW="$(date +"%Y-%m-%d_%H-%M-%S")"
 prompt_for_ssh_port() {
     while true; do
-        read -p "Enter the desired SSH port: " ssh_port
-        if [[ "$ssh_port" =~ ^[0-9]+$ ]] && [ "$ssh_port" -gt 0 ] && [ "$ssh_port" -le 65535 ]; then
+        read -p "Enter the desired SSH port: " ssh_port1
+        if [[ "$ssh_port1" =~ ^[0-9]+$ ]] && [ "$ssh_port1" -gt 0 ] && [ "$ssh_port1" -le 65535 ]; then
             break
         else
             echo "Invalid port number. Please enter a number between 1 and 65535."
@@ -95,15 +95,14 @@ prompt_for_domain_name() {
     done
 }
 
-# Call the function
-# prompt_for_domain_name
+
 
 # Prompt for Doamin name
 prompt_for_domain_name
 
 # Variable Section -------------------------------------------
 HostName=$DOMAIN_NAME
-SSH_PORT=$ssh_port
+SSH_PORT=$ssh_port1
 BAC_DIR=/opt/backup/files_$NOW
 # docker config destination
 DOCKER_DEST=/etc/systemd/system/docker.service.d/
@@ -287,7 +286,7 @@ PermitRootLogin yes
 #StrictModes yes
 MaxAuthTries 3
 MaxSessions 2
-#PubkeyAuthentication yes
+PubkeyAuthentication yes
 
 # To disable tunneled clear text passwords, change to no here!
 PasswordAuthentication yes
