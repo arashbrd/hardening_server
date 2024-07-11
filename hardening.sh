@@ -10,18 +10,56 @@ WEEK=`date +%A`
 MONTH=`date +%Y-%d`
 DAY=`date +%Y-%m-%d`
 NOW="$(date +"%Y-%m-%d_%H-%M-%S")"
+prompt_for_ssh_port() {
+    while true; do
+        read -p "Enter the desired SSH port: " ssh_port
+        if [[ "$ssh_port" =~ ^[0-9]+$ ]] && [ "$ssh_port" -gt 0 ] && [ "$ssh_port" -le 65535 ]; then
+            break
+        else
+            echo "Invalid port number. Please enter a number between 1 and 65535."
+        fi
+    done
+}
+
+# Get the current non-root user (the one who invoked sudo)
+if [ -n "$SUDO_USER" ]; then
+    CURRENT_USER="$SUDO_USER"
+else
+    CURRENT_USER="$USER"
+fi
+
+# Prompt for SSH port
+prompt_for_ssh_port
+
+# Prompt for SSH public key
+read -p "Enter your SSH public key (leave empty to use default): " ssh_public_key
+
+# Use default SSH public key if no input provided
+if [ -z "$ssh_public_key" ]; then
+    ssh_public_key="$default_ssh_public_key"
+fi
+
+# Add SSH public key to authorized_keys
+echo "Adding SSH public key..."
+sudo -u $CURRENT_USER mkdir -p /home/$CURRENT_USER/.ssh
+sudo -u $CURRENT_USER bash -c "echo '$ssh_public_key' >> /home/$CURRENT_USER/.ssh/authorized_keys"
+sudo chmod 600 /home/$CURRENT_USER/.ssh/authorized_keys
+sudo chmod 700 /home/$CURRENT_USER/.ssh
+sudo chown -R $CURRENT_USER:$CURRENT_USER /home/$CURRENT_USER/.ssh
+
+echo "SSH public key added."
 
 prompt_for_timeout_config() {
     while true;do
 read -p "Enter your Timeout Config as seconds[1-3600]-(leave empty to set 300 seconds): " TIMEOUT_CONFIG
 
 # Use default SSH public key if no input provided
-if [ -z "$TIMEOUT_CONFIG" ]; then
+# if [ -z "$TIMEOUT_CONFIG" ]; then
     if [[ "$TIMEOUT_CONFIG" =~ ^[0-9]+$ ]] && [ "$TIMEOUT_CONFIG" -gt 0 ] && [ "$TIMEOUT_CONFIG" -le 3600 ]; then
         # TIMEOUT_CONFIG="$TIMEOUT_CONFIG"
         echo -e '#!/bin/bash\n### $TIMEOUT_CONFIG seconds == $TIMEOUT_CONFIG/60 minutes ##\nTMOUT=$TIMEOUT_CONFIG\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
         break
-    fi
+    # fi
 else
  echo "Invalid Timeout config!"
 # echo -e '#!/bin/bash\n### 300 seconds == 5 minutes ##\nTMOUT=300\nreadonly TMOUT\nexport TMOUT' > /etc/profile.d/timout-settings.sh
@@ -31,27 +69,7 @@ done
 cat /etc/profile.d/timout-settings.sh
 }
 
-#  prompt_for_domain_name() {
-#     while true; do
 
-# read -p "Enter a domain name: " DOMAIN_NAME
-
-# # Validate domain name
-# validate="(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)"
-
-# # If user doesn't enter anything
-# if [ -e $DOMAIN_NAME ]; then
-#     echo "You must enter a domain"
-# fi
-
-# if [[ $DOMAIN_NAME =~ $validate ]]; then
-#     echo "Valid $DOMAIN_NAME name."
-#     break
-# else
-#     echo "Not valid $DOMAIN_NAME name."
-# fi
-# done
-#  }
 
 prompt_for_domain_name() {
     while true; do
@@ -105,10 +123,44 @@ if [ -d $BAC_DIR ] ; then
    echo "backup directory is exist"
 else
    mkdir -p $BAC_DIR
-fi   
+fi 
+#!/bin/bash
+
+read -p "Do you want to change apt sources list? (yes/no): " SOURCE_LIST
+
+if [[ "$SOURCE_LIST" == "yes" ]]; then
+    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+        # Backup existing sources.list
+        echo "Backing up existing sources.list..."
+        sudo cp /etc/apt/sources.list.d/ubuntu.sources $BAC_DIR/ubuntu.sources.backup
+    else
+        echo "No existing ubuntu.sources found, skipping backup."
+fi
+
+# Write new sources.list using ArvanCloud mirror
+echo "Updating sources.list with ArvanCloud mirror..."
+sudo bash -c 'cat > /etc/apt/sources.list.d/ubuntu.sources <<EOL
+# ArvanCloud mirror
+Types: deb
+URIs: http://mirror.arvancloud.ir/ubuntu
+Suites: noble noble-updates noble-backports
+Components: main universe restricted multiverse
+EOL'
+fi
+
+
 # Preparing os ----------------------------------------------------
-# Update OS
-apt update && apt upgrade -y 
+# Update package lists
+echo "Updating package lists..."
+sudo apt update
+
+# Upgrade packages
+echo "Upgrading packages..."
+sudo apt upgrade -y
+
+echo "Done."
+
+
 
 # Remove unuse package
 apt remove -y snapd && apt purge -y snapd
@@ -119,6 +171,7 @@ apt install -y wget git vim nano bash-completion curl htop iftop jq ncdu unzip n
 # Host Configuration ------------------------------------------
 echo -e " \e[30;48;5;56m \e[1m \e[38;5;15mHostname Configuration \e[0m"
 hostnamectl set-hostname $HostName
+echo "Hostname Configuration Done."
 
 
 # Timeout Config -----------------------------------------------
@@ -126,6 +179,8 @@ echo -e " \e[30;48;5;56m \e[1m \e[38;5;15mTimeout Setting \e[0m"
 # Prompt for Timeout Config
 
 prompt_for_timeout_config
+echo "Timeout Setting Done."
+
 #config sysctl.conf: -----------------------------------------
 cp /etc/sysctl.conf $BAC_DIR
 echo -e " \e[30;48;5;56m \e[1m \e[38;5;15mSysctl Configuration \e[0m"
@@ -341,7 +396,7 @@ if [[ "$install_docker" == "yes" ]]; then
         [Service]
         ExecStart=
         ExecStart=/usr/bin/dockerd --registry-mirror=$MIRROR_REGISTRY
-        EOT
+EOT
         # Start and enable Docker service
         systemctl daemon-reload
         systemctl restart docker
@@ -361,3 +416,5 @@ else
     echo "Docker installation skipped."
 fi
 
+echo "Script executed successfully."
+exit 0
