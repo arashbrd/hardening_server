@@ -51,7 +51,7 @@ echo "SSH public key added."
 
 prompt_for_timeout_config() {
     while true;do
-read -p "Enter your Timeout Config as seconds[1-3600]-(leave empty to set 300 seconds): " TIMEOUT_CONFIG
+read -p "Enter your Timeout Config as seconds[1-3600]: " TIMEOUT_CONFIG
 
 # Use default SSH public key if no input provided
 # if [ -z "$TIMEOUT_CONFIG" ]; then
@@ -103,7 +103,7 @@ prompt_for_domain_name
 
 # Variable Section -------------------------------------------
 HostName=$DOMAIN_NAME
-SSH_PORT=6575
+SSH_PORT=$ssh_port
 BAC_DIR=/opt/backup/files_$NOW
 # docker config destination
 DOCKER_DEST=/etc/systemd/system/docker.service.d/
