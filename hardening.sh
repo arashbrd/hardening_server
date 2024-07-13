@@ -43,11 +43,11 @@ fi
 
 # Add SSH public key to authorized_keys
 echo "Adding SSH public key..."
-sudo -u $CURRENT_USER mkdir -p /home/$CURRENT_USER/.ssh
-sudo -u $CURRENT_USER bash -c "echo '$ssh_public_key' >> /home/$CURRENT_USER/.ssh/authorized_keys"
-sudo chmod 600 /home/$CURRENT_USER/.ssh/authorized_keys
-sudo chmod 700 /home/$CURRENT_USER/.ssh
-sudo chown -R $CURRENT_USER:$CURRENT_USER /home/$CURRENT_USER/.ssh
+sudo -u $CURRENT_USER mkdir -p ~/.ssh
+sudo -u $CURRENT_USER bash -c "echo '$ssh_public_key' >> ~/.ssh/authorized_keys"
+sudo chmod 600 ~/.ssh/authorized_keys
+sudo chmod 700 ~/.ssh
+sudo chown -R $CURRENT_USER:$CURRENT_USER ~/.ssh
 
 echo "SSH public key added."
 
